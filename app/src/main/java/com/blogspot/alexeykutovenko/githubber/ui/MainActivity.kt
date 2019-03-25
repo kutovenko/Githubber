@@ -33,8 +33,10 @@ class MainActivity : BaseActivity(), HomeFragment.OnFragmentInteractionListener 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Вот тут я пока не понял, если честно, как правильно на Kotlin это должно выглядеть. Не срабатывает смена локали
         return when (item.itemId) {
-            R.id.action_english -> {updateLocale(Locale.ENGLISH); true}
-            R.id.action_russian -> {updateLocale(Locale("ru", "RU")); true}
+            R.id.action_english -> {updateLocale(Locale.ENGLISH)
+                true}
+            R.id.action_russian -> {updateLocale(Locale("ru", "RU"))
+                true}
             else -> super.onOptionsItemSelected(item)
         }
     }

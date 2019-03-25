@@ -1,5 +1,6 @@
 package com.blogspot.alexeykutovenko.githubber.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,6 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blogspot.alexeykutovenko.githubber.R
+import com.blogspot.alexeykutovenko.githubber.network.RepoItem
 import com.blogspot.alexeykutovenko.githubber.network.RetrofitFactory
 import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.coroutines.CoroutineScope
@@ -16,20 +18,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import kotlin.system.measureTimeMillis
 
 class HomeFragment : Fragment() {
 
     private var listener: OnFragmentInteractionListener? = null
+    private var data: List<RepoItem> = ArrayList()
+    private var benchmark: Long = 0L
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_home, container, false)
-
-        return view
+        return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -39,7 +43,8 @@ class HomeFragment : Fragment() {
         }
 
         btn_go.setOnClickListener{
-            val username = et_username.text.toString()
+//            val username = et_username.text.toString()
+            val username = "square"
 
             val service = RetrofitFactory.makeGithubService()
             CoroutineScope(Dispatchers.IO).launch {
@@ -48,12 +53,8 @@ class HomeFragment : Fragment() {
                     try {
                         val response = request.await()
                         if (response.isSuccessful) {
-                            val data = (response.body()!!.asSequence()).toList() //И это всё? Где еще использовать sequence?
+                            data = (response.body()!!.asSequence()).toList() //И это всё? Где еще использовать sequence?
                             (rv_repo_list.adapter as HomeAdapter).setValues(data)
-
-//Пример sequence для тестового Toast
-//                            (response.body()?.asSequence())?.forEach { stringBuilder.append("${it.name} - ${it.url} - ${it.description} \n") }
-//                            toast(stringBuilder.toString())
 
                         } else {
                             toast("Error: ${response.code()}")
@@ -66,8 +67,44 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+
+        btn_list.setOnClickListener{
+            if (data.isEmpty()) toast("No data. Please choose repository")
+            else{
+                val newArray: ArrayList<RepoItem> = ArrayList()
+                benchmark = measureTimeMillis { newArray.addAll(data.processWithList()) }
+                (rv_repo_list.adapter as HomeAdapter).setValues(newArray)
+                tv_list_result.text = "$benchmark ms."
+            }
+        }
+
+        btn_sequence.setOnClickListener{
+            if (data.isEmpty()) toast("No data. Please choose repository")
+            else{
+                val newArray: ArrayList<RepoItem> = ArrayList()
+                benchmark = measureTimeMillis { newArray.addAll(data.processWithSequence()) }
+                (rv_repo_list.adapter as HomeAdapter).setValues(newArray)
+                tv_sequence_result.text = "$benchmark ms."
+            }
+        }
+
     }
 
+
+    private fun List<RepoItem>.processWithList(): List<RepoItem>{
+        return this.filter { it.language == "Java" }
+            .filter { it.topics!!.contains("Android") }
+            .sortedByDescending { it.stargazers_count }
+            .toList()
+    }
+
+    private fun List<RepoItem>.processWithSequence(): List<RepoItem> {
+        return this.asSequence()
+            .filter { it.language == "Java" }
+            .filter { it.topics!!.contains("Android") }
+            .sortedByDescending { it.stargazers_count }
+            .toList()
+    }
 
 
     private fun toast(s: String) {

@@ -6,10 +6,6 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface GithubService {
-    @GET("/posts")
-    fun getPostsAsync(): Deferred<Response<List<RepoItem>>>
-
-
-    @GET("/users/{user}/repos")
+    @GET("/users/{user}/repos?per_page=100")
     fun getReposAsync(@Path("user") user: String): Deferred<Response<List<RepoItem>>>
 }

@@ -9,9 +9,17 @@ class RepoItem {
     @SerializedName("html_url")
     var html_url: String = ""
 
-    @SerializedName("avatar_url")
-    var avatarUrl: String = ""
+    @SerializedName("language")
+    var language: String = ""
 
-    @SerializedName("description")
-    var description: String = ""
+    @SerializedName("topics")
+    var topics: List<String>? = ArrayList()
+
+    @SerializedName("stargazers_count")
+    var stargazers_count: Int = 0
+
+}
+
+class Topics {
+
 }

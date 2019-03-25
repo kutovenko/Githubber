@@ -28,7 +28,8 @@ class HomeAdapter(
 
     fun setValues(values: List<RepoItem>){
         this.mValues = values
-        notifyItemRangeChanged(0, mValues.size)
+        notifyDataSetChanged()
+//        notifyItemRangeChanged(0, mValues.size)
 
     }
 
@@ -40,8 +41,8 @@ class HomeAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = mValues.get(position)
-        holder.mIdView.text = item.name
-        holder.mContentView.text = item.html_url
+        holder.repoName.text = item.name
+        holder.repoInfo.text = "${item.language} - ${item.topics?.size} - ${item.stargazers_count}"
 
         with(holder.mView) {
             tag = item
@@ -52,11 +53,11 @@ class HomeAdapter(
     override fun getItemCount(): Int = mValues.size
 
     inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
-        val mIdView: TextView = mView.repo_name
-        val mContentView: TextView = mView.content
+        val repoName: TextView = mView.repo_name
+        val repoInfo: TextView = mView.content
 
         override fun toString(): String {
-            return super.toString() + " '" + mContentView.text + "'"
+            return super.toString() + " '" + repoInfo.text + "'"
         }
     }
 }
