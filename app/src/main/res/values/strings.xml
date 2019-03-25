@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Githubber</string>
+    <string name="english">English</string>
+    <string name="russian">Russian</string>
+    <string name="find_repositories_by">Find repositories by</string>
+    <string name="username">username</string>
+    <string name="load">Find</string>
+</resources>
