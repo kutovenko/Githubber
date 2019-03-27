@@ -23,7 +23,7 @@ class HomeFragment : Fragment() {
 
     private var listener: OnFragmentInteractionListener? = null
     private var data: List<RepoItem> = ArrayList()
-    private var benchmark: Long = 0L
+    private var time: Long = 0L
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -68,36 +68,32 @@ class HomeFragment : Fragment() {
 
         btn_list.setOnClickListener{
             if (data.isEmpty()) toast("No data. Please choose repository")
-            else{
-                val newArray: ArrayList<RepoItem> = ArrayList()
-                benchmark = measureTimeMillis { newArray.addAll(data.processWithList()) }
-                (rv_repo_list.adapter as HomeAdapter).setValues(newArray)
-                tv_list_result.text = "$benchmark ms."
-            }
+            else doBenchmark {processWithList(data)}
         }
 
         btn_sequence.setOnClickListener{
             if (data.isEmpty()) toast("No data. Please choose repository")
-            else{
-                val newArray: ArrayList<RepoItem> = ArrayList()
-                benchmark = measureTimeMillis { newArray.addAll(data.processWithSequence()) }
-                (rv_repo_list.adapter as HomeAdapter).setValues(newArray)
-                tv_sequence_result.text = "$benchmark ms."
-            }
+            else doBenchmark {processWithSequence(data)}
         }
 
     }
 
+    private fun doBenchmark(doProcess: (List<RepoItem>) -> List<RepoItem>){
+            val newArray: ArrayList<RepoItem> = ArrayList()
+            time = measureTimeMillis { newArray.addAll(doProcess(data)) }
+            (rv_repo_list.adapter as HomeAdapter).setValues(newArray)
+            tv_sequence_result.text = "$time ms."
+    }
 
-    private fun List<RepoItem>.processWithList(): List<RepoItem>{
-        return this.filter { it.language == "Java" }
+    private fun processWithList (data: List<RepoItem>): List<RepoItem> {
+        return data.filter { it.language == "Java" }
             .filter { it.topics!!.contains("Android") }
             .sortedByDescending { it.stargazers_count }
             .toList()
     }
 
-    private fun List<RepoItem>.processWithSequence(): List<RepoItem> {
-        return this.asSequence()
+    private fun processWithSequence(data: List<RepoItem>): List<RepoItem> {
+        return data.asSequence()
             .filter { it.language == "Java" }
             .filter { it.topics!!.contains("Android") }
             .sortedByDescending { it.stargazers_count }
