@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
-import kotlin.system.measureTimeMillis
+import kotlin.system.measureNanoTime
 
 class HomeFragment : Fragment() {
 
@@ -41,12 +41,12 @@ class HomeFragment : Fragment() {
         }
 
         btn_go.setOnClickListener{
-//            val username = et_username.text.toString()
+            //            val username = et_username.text.toString()
             val username = "square"
 
             val service = RetrofitFactory.makeGithubService()
             CoroutineScope(Dispatchers.IO).launch {
-                val request = service.getReposAsync(username)
+                val request = service.getReposAsync(username, "1")
                 withContext(Dispatchers.Main) {
                     try {
                         val response = request.await()
@@ -64,40 +64,51 @@ class HomeFragment : Fragment() {
                     }
                 }
             }
+            tv_sequence_result.text = ""
+            tv_list_result.text = ""
         }
+
+        //Lambda with a receiver
+        val processList = fun List<RepoItem>.() =
+            this.filter { it.language == "Java" }
+//            .filter { it.topics!!.contains("Android") }
+                .sortedByDescending { it.stargazers_count }
+                .toList()
+
+        //Lambda with a receiver
+        val processSequence = fun List<RepoItem>.() =
+            this.asSequence()
+                .filter { it.language == "Java" }
+//                .filter { it.topics!!.contains("Android") }
+                .sortedByDescending { it.stargazers_count }
+                .toList()
 
         btn_list.setOnClickListener{
             if (data.isEmpty()) toast("No data. Please choose repository")
-            else doBenchmark {processWithList(data)}
+            else doBenchmark {data.processList()}
+            (rv_repo_list.adapter as HomeAdapter).setValues(data.processList())
+            tv_list_result.text = "$time ms."
+            toast(data.size.toString())
+
         }
 
         btn_sequence.setOnClickListener{
             if (data.isEmpty()) toast("No data. Please choose repository")
-            else doBenchmark {processWithSequence(data)}
+            else doBenchmark {data.processSequence()}
+            (rv_repo_list.adapter as HomeAdapter).setValues(data.processSequence())
+            tv_sequence_result.text = "$time ms."
+            toast(data.size.toString())
         }
 
     }
 
-    private fun doBenchmark(doProcess: (List<RepoItem>) -> List<RepoItem>){
-            val newArray: ArrayList<RepoItem> = ArrayList()
-            time = measureTimeMillis { newArray.addAll(doProcess(data)) }
-            (rv_repo_list.adapter as HomeAdapter).setValues(newArray)
-            tv_sequence_result.text = "$time ms."
+    //Higher order function
+    private fun doBenchmark(func: List<RepoItem>.() -> List<RepoItem>) {
+        time = measureTime { func }
     }
 
-    private fun processWithList (data: List<RepoItem>): List<RepoItem> {
-        return data.filter { it.language == "Java" }
-            .filter { it.topics!!.contains("Android") }
-            .sortedByDescending { it.stargazers_count }
-            .toList()
-    }
-
-    private fun processWithSequence(data: List<RepoItem>): List<RepoItem> {
-        return data.asSequence()
-            .filter { it.language == "Java" }
-            .filter { it.topics!!.contains("Android") }
-            .sortedByDescending { it.stargazers_count }
-            .toList()
+    private fun measureTime(func: (List<RepoItem>) -> Unit): Long{
+        return measureNanoTime { func(data)}
     }
 
 
