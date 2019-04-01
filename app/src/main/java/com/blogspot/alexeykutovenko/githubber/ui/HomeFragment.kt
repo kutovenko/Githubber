@@ -80,14 +80,14 @@ class HomeFragment : Fragment() {
 
         btn_list.setOnClickListener{
             if (data.isEmpty()) toast("No data. Please choose repository")
-            else doBenchmark {data.processList()}
+            else time = doBenchmark {data.processList()}
             (rv_repo_list.adapter as HomeAdapter).setValues(data.processList())
             tv_list_result.text = "$time ms."
         }
 
         btn_sequence.setOnClickListener{
             if (data.isEmpty()) toast("No data. Please choose repository")
-            else doBenchmark {data.processSequence()}
+            else time = doBenchmark {data.processSequence()}
             (rv_repo_list.adapter as HomeAdapter).setValues(data.processSequence())
             tv_sequence_result.text = "$time ms."
         }
@@ -122,14 +122,7 @@ class HomeFragment : Fragment() {
     }
 
     //Higher order function
-    private fun doBenchmark(func: List<RepoItem>.() -> List<RepoItem>) {
-        time = measureTime { func }
-    }
-
-    private fun measureTime(func: (List<RepoItem>) -> Unit): Long{
-        return measureNanoTime { func(data)}
-    }
-
+    private fun doBenchmark(func: List<RepoItem>.() -> List<RepoItem>) = measureNanoTime { func(data)}
 
     private fun toast(s: String) {
         Toast.makeText(context, s, Toast.LENGTH_SHORT).show()
