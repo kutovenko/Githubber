@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.blogspot.alexeykutovenko.githubber.R
+import com.blogspot.alexeykutovenko.githubber.network.GithubService
 import com.blogspot.alexeykutovenko.githubber.network.RepoItem
 import com.blogspot.alexeykutovenko.githubber.network.RetrofitFactory
 import kotlinx.android.synthetic.main.fragment_home.*
@@ -19,10 +20,11 @@ import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import kotlin.system.measureNanoTime
 
+
 class HomeFragment : Fragment() {
 
     private var listener: OnFragmentInteractionListener? = null
-    private var data: List<RepoItem> = ArrayList()
+    private var data: ArrayList<RepoItem> = ArrayList()
     private var time: Long = 0L
 
     override fun onCreateView(
@@ -45,33 +47,24 @@ class HomeFragment : Fragment() {
             val username = "square"
 
             val service = RetrofitFactory.makeGithubService()
-            CoroutineScope(Dispatchers.IO).launch {
-                val request = service.getReposAsync(username, "1")
-                withContext(Dispatchers.Main) {
-                    try {
-                        val response = request.await()
-                        if (response.isSuccessful) {
-                            data = (response.body()!!.asSequence()).toList() //И это всё? Где еще использовать sequence?
-                            (rv_repo_list.adapter as HomeAdapter).setValues(data)
+            var pageNumber: Int = 1
+            var fullItemsList: List<RepoItem> = ArrayList()
 
-                        } else {
-                            toast("Error: ${response.code()}")
-                        }
-                    } catch (e: HttpException) {
-                        toast("Exception ${e.message}")
-                    } catch (e: Throwable) {
-                        toast("Ooops: Something else went wrong")
-                    }
-                }
-            }
+            getAllRepositories(service, username, pageNumber)
+
+
+
             tv_sequence_result.text = ""
             tv_list_result.text = ""
         }
 
+
+
+
         //Lambda with a receiver
         val processList = fun List<RepoItem>.() =
             this.filter { it.language == "Java" }
-//            .filter { it.topics!!.contains("Android") }
+//            .filter { it.topics!!.contains("android") }
                 .sortedByDescending { it.stargazers_count }
                 .toList()
 
@@ -79,7 +72,7 @@ class HomeFragment : Fragment() {
         val processSequence = fun List<RepoItem>.() =
             this.asSequence()
                 .filter { it.language == "Java" }
-//                .filter { it.topics!!.contains("Android") }
+//                .filter { it.topics!!.contains("android")}
                 .sortedByDescending { it.stargazers_count }
                 .toList()
 
@@ -100,6 +93,33 @@ class HomeFragment : Fragment() {
             toast(data.size.toString())
         }
 
+    }
+
+    private fun getAllRepositories(service: GithubService, username: String, pageNumber: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val request = service.getReposAsync(username, pageNumber.toString())
+            withContext(Dispatchers.Main) {
+                try {
+                    val response = request.await()
+                    if (response.isSuccessful) {
+                        val currentPage = (response.body()!!.asSequence()).toList()
+                        if (currentPage.isNotEmpty()){
+                            data.addAll(currentPage)
+                            getAllRepositories(service, username, pageNumber + 1)
+                        } else {
+                            (rv_repo_list.adapter as HomeAdapter).setValues(data)
+                        }
+
+                    } else {
+                        toast("Error: ${response.code()}")
+                    }
+                } catch (e: HttpException) {
+                    toast("Exception ${e.message}")
+                } catch (e: Throwable) {
+                    toast("Something else went wrong")
+                }
+            }
+        }
     }
 
     //Higher order function
