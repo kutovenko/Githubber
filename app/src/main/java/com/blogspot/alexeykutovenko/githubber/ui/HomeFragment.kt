@@ -64,7 +64,8 @@ class HomeFragment : Fragment() {
         //Lambda with a receiver
         val processList = fun List<RepoItem>.() =
             this.filter { it.language == "Java" }
-//            .filter { it.topics!!.contains("android") }
+//                .filter { it.topics!!.contains("android") }
+                .filter { it.description?.contains("Android") ?: false}
                 .sortedByDescending { it.stargazers_count }
                 .toList()
 
@@ -73,6 +74,7 @@ class HomeFragment : Fragment() {
             this.asSequence()
                 .filter { it.language == "Java" }
 //                .filter { it.topics!!.contains("android")}
+                .filter { it.description?.contains("Android") ?: false}
                 .sortedByDescending { it.stargazers_count }
                 .toList()
 
@@ -81,8 +83,6 @@ class HomeFragment : Fragment() {
             else doBenchmark {data.processList()}
             (rv_repo_list.adapter as HomeAdapter).setValues(data.processList())
             tv_list_result.text = "$time ms."
-            toast(data.size.toString())
-
         }
 
         btn_sequence.setOnClickListener{
@@ -90,7 +90,6 @@ class HomeFragment : Fragment() {
             else doBenchmark {data.processSequence()}
             (rv_repo_list.adapter as HomeAdapter).setValues(data.processSequence())
             tv_sequence_result.text = "$time ms."
-            toast(data.size.toString())
         }
 
     }

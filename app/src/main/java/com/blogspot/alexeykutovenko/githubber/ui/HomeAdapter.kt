@@ -28,8 +28,7 @@ class HomeAdapter(
 
     fun setValues(values: List<RepoItem>){
         this.mValues = values
-        notifyDataSetChanged()
-//        notifyItemRangeChanged(0, mValues.size)
+        notifyItemRangeChanged(0, mValues.size - 1)
 
     }
 
@@ -42,7 +41,7 @@ class HomeAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = mValues.get(position)
         holder.repoName.text = item.name
-        holder.repoInfo.text = "${item.language} - ${item.topics?.size} - ${item.stargazers_count}"
+        holder.repoInfo.text = "${item.language} - topics: ${item.topics?.size} - ${item.description} - watched by ${item.stargazers_count}"
 
         with(holder.mView) {
             tag = item

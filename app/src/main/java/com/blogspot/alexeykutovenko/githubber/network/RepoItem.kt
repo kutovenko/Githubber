@@ -18,8 +18,6 @@ class RepoItem {
     @SerializedName("stargazers_count")
     var stargazers_count: Int = 0
 
-}
-
-class Topics {
-
+    @SerializedName("description")
+    var description: String? = ""
 }
