@@ -42,30 +42,10 @@ class HomeFragment : Fragment() {
             adapter = HomeAdapter(listOf(), listener)
         }
 
-        btn_go.setOnClickListener{
-            //            val username = et_username.text.toString()
-            val username = "square"
-
-            val service = RetrofitFactory.makeGithubService()
-            var pageNumber: Int = 1
-            var fullItemsList: List<RepoItem> = ArrayList()
-
-            getAllRepositories(service, username, pageNumber)
-
-
-
-            tv_sequence_result.text = ""
-            tv_list_result.text = ""
-        }
-
-
-
-
         //Lambda with a receiver
         val processList = fun List<RepoItem>.() =
             this.filter { it.language == "Java" }
-//                .filter { it.topics!!.contains("android") }
-                .filter { it.description?.contains("Android") ?: false}
+                .filter { it.topics!!.contains("android") || it.topics!!.contains("Android")}
                 .sortedByDescending { it.stargazers_count }
                 .toList()
 
@@ -73,10 +53,22 @@ class HomeFragment : Fragment() {
         val processSequence = fun List<RepoItem>.() =
             this.asSequence()
                 .filter { it.language == "Java" }
-//                .filter { it.topics!!.contains("android")}
-                .filter { it.description?.contains("Android") ?: false}
+                .filter { it.topics!!.contains("android") || it.topics!!.contains("Android")}
                 .sortedByDescending { it.stargazers_count }
                 .toList()
+
+        btn_go.setOnClickListener{
+            val username = et_username.text.toString()
+
+            val service = RetrofitFactory.makeGithubService()
+            val pageNumber = 1
+
+            getPagedRepositoryData(service, username, pageNumber)
+
+            tv_sequence_result.text = ""
+            tv_list_result.text = ""
+        }
+
 
         btn_list.setOnClickListener{
             if (data.isEmpty()) toast("No data. Please choose repository")
@@ -94,7 +86,8 @@ class HomeFragment : Fragment() {
 
     }
 
-    private fun getAllRepositories(service: GithubService, username: String, pageNumber: Int) {
+    //No tailrec in try-catch?
+    private fun getPagedRepositoryData(service: GithubService, username: String, pageNumber: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             val request = service.getReposAsync(username, pageNumber.toString())
             withContext(Dispatchers.Main) {
@@ -104,7 +97,7 @@ class HomeFragment : Fragment() {
                         val currentPage = (response.body()!!.asSequence()).toList()
                         if (currentPage.isNotEmpty()){
                             data.addAll(currentPage)
-                            getAllRepositories(service, username, pageNumber + 1)
+                            getPagedRepositoryData(service, username, pageNumber + 1)
                         } else {
                             (rv_repo_list.adapter as HomeAdapter).setValues(data)
                         }
@@ -147,11 +140,7 @@ class HomeFragment : Fragment() {
     }
 
     companion object {
-
-        // TODO: Customize parameter argument names
         const val ARG_COLUMN_COUNT = "column-count"
-
-        // TODO: Customize parameter initialization
         @JvmStatic
         fun newInstance(columnCount: Int) =
             HomeFragment().apply {
